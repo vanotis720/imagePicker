@@ -20,18 +20,25 @@ export default function ImagePickerExample() {
 		console.log(result);
 
 		if (!result.canceled) {
-			let uri = result.assets[0].uri;
-			setImage(uri);
+			setImage(result.assets[0].uri);
 		}
 	};
 
 	const sendImageToAPI = async () => {
 		setLoading(true);
-		let apiUrl = 'http://127.0.0.1:8000/api/upload';
+		let apiUrl = 'https://imagepicker.herokuapp.com/api/upload';
+
+		let uriParts = image.split('.');
+		let fileType = uriParts[uriParts.length - 1];
 
 		// upload the image
 		let formData = new FormData();
-		formData.append('image', { uri: image });
+		formData.append('image', {
+			uri: image,
+			name: `image.${fileType}`,
+			type: `image/${fileType}`,
+		});
+		// formData.append('image', image);
 
 		fetch(apiUrl, {
 			method: 'POST',
@@ -43,15 +50,24 @@ export default function ImagePickerExample() {
 		})
 			.then((response) => response.json())
 			.then((json) => {
+
+				console.log('============== from sendImage ======================');
+				console.log(formData);
+				console.log('====================================');
+
 				console.log(json);
-				setResults(json.results);
-				if (json.results) {
+				if (json.data) {
+					console.log('here');
+					setLoading(false);
 					setSended(true);
 				}
+				else {
+					setLoading(false);
+				}
 			}).catch((error) => {
+				setLoading(false);
 				console.error(error);
 			});
-		setLoading(false);
 	}
 
 
@@ -70,6 +86,7 @@ export default function ImagePickerExample() {
 				</TouchableOpacity>
 			</View>
 			<View style={styles.response}>
+				{loading && <ActivityIndicator size={'large'} color={'#0F730C'} />}
 				{sended && (
 					<>
 						<Ionicons name="checkmark-circle" size={80} color="#0F730C" />
@@ -78,7 +95,6 @@ export default function ImagePickerExample() {
 				)}
 			</View>
 			<View style={styles.viewer}>
-				{loading && <ActivityIndicator size={'large'} color={'#0F730C'} />}
 				{image && <Image source={{ uri: image }} style={styles.image} />}
 			</View>
 
